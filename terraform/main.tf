@@ -19,6 +19,13 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -207,12 +214,26 @@ resource "aws_lb_target_group" "tika_tg" {
 }
 
 # ALB Listener
+# resource "aws_lb_listener" "front_end" {
+#   load_balancer_arn = aws_lb.docuhunt_alb.arn
+#   port              = "443"
+#   protocol          = "HTTPS"
+#   ssl_policy        = "ELBSecurityPolicy-2016-08"
+#   certificate_arn   = "arn:aws:acm:ap-south-1:050752654432:certificate/3674e245-064a-4a23-a4be-5b329d821624"
+
+#   default_action {
+#     type = "fixed-response"
+#     fixed_response {
+#       content_type = "text/plain"
+#       message_body = "Invalid path"
+#       status_code  = "404"
+#     }
+#   }
+# }
 resource "aws_lb_listener" "front_end" {
   load_balancer_arn = aws_lb.docuhunt_alb.arn
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = "arn:aws:acm:ap-south-1:050752654432:certificate/3674e245-064a-4a23-a4be-5b329d821624"
+  port              = "80"
+  protocol          = "HTTP"
 
   default_action {
     type = "fixed-response"
