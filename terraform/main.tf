@@ -103,7 +103,7 @@ resource "aws_ecs_task_definition" "elasticsearch_task" {
   container_definitions = jsonencode([
     {
       name  = "elasticsearch"
-      image = "docker.elastic.co/elasticsearch/elasticsearch:7.17.0"
+      image = "docker.elastic.co/elasticsearch/elasticsearch:8.15.5"
       
       portMappings = [
         {
@@ -153,7 +153,7 @@ resource "aws_ecs_task_definition" "tika_task" {
   container_definitions = jsonencode([
     {
       name  = "tika"
-      image = "apache/tika:2.9.0"
+      image = "apache/tika:3.0.0.0"
       
       portMappings = [
         {
