@@ -60,6 +60,13 @@ resource "aws_security_group" "ecs_tasks_sg" {
     security_groups = [aws_security_group.alb_sg.id]
   }
 
+  ingress {
+    from_port       = 5601
+    to_port         = 5601
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -141,6 +148,47 @@ resource "aws_ecs_task_definition" "elasticsearch_task" {
   ])
 }
 
+# Kibana Task Definition
+resource "aws_ecs_task_definition" "kibana_task" {
+  family                   = "kibana"
+  requires_compatibilities = ["FARGATE"]
+  network_mode            = "awsvpc"
+  cpu                     = 512
+  memory                  = 1024
+  execution_role_arn      = aws_iam_role.ecs_task_execution_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name  = "kibana"
+      image = "docker.elastic.co/kibana/kibana:8.15.5"
+      
+      portMappings = [
+        {
+          containerPort = 5601
+          hostPort      = 5601
+          protocol      = "tcp"
+        }
+      ]
+
+      environment = [
+        {
+          name  = "ELASTICSEARCH_HOSTS"
+          value = "http://localhost:9200"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/kibana"
+          "awslogs-region"        = "ap-south-1"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+}
+
 # Tika Server Task Definition
 resource "aws_ecs_task_definition" "tika_task" {
   family                   = "tika"
@@ -188,6 +236,20 @@ resource "aws_lb" "docuhunt_alb" {
 resource "aws_lb_target_group" "elasticsearch_tg" {
   name        = "elasticsearch-tg"
   port        = 9200
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.default.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/"
+    healthy_threshold   = 2
+    unhealthy_threshold = 10
+  }
+}
+
+resource "aws_lb_target_group" "kibana_tg" {
+  name        = "kibana-tg"
+  port        = 5601
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
@@ -262,6 +324,22 @@ resource "aws_lb_listener_rule" "elasticsearch_rule" {
   }
 }
 
+resource "aws_lb_listener_rule" "kibana_rule" {
+  listener_arn = aws_lb_listener.front_end.arn
+  priority     = 150
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.kibana_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/kibana/*"]
+    }
+  }
+}
+
 resource "aws_lb_listener_rule" "tika_rule" {
   listener_arn = aws_lb_listener.front_end.arn
   priority     = 200
@@ -311,6 +389,27 @@ resource "aws_ecs_service" "elasticsearch_service" {
   }
 }
 
+# Kibana Service
+resource "aws_ecs_service" "kibana_service" {
+  name            = "kibana-service"
+  cluster         = aws_ecs_cluster.docuhunt_cluster.id
+  task_definition = aws_ecs_task_definition.kibana_task.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.ecs_tasks_sg.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.kibana_tg.arn
+    container_name   = "kibana"
+    container_port   = 5601
+  }
+}
+
 # Tika Service
 resource "aws_ecs_service" "tika_service" {
   name            = "tika-service"
@@ -335,6 +434,11 @@ resource "aws_ecs_service" "tika_service" {
 # CloudWatch Log Groups
 resource "aws_cloudwatch_log_group" "elasticsearch_logs" {
   name              = "/ecs/elasticsearch"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "kibana_logs" {
+  name              = "/ecs/kibana"
   retention_in_days = 30
 }
 
