@@ -67,6 +67,13 @@ resource "aws_security_group" "ecs_tasks_sg" {
     security_groups = [aws_security_group.alb_sg.id]
   }
 
+  ingress {
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -197,6 +204,40 @@ resource "aws_ecs_task_definition" "kibana_task" {
   ])
 }
 
+# Redis Task Definition
+resource "aws_ecs_task_definition" "redis_task" {
+  family                   = "redis"
+  requires_compatibilities = ["FARGATE"]
+  network_mode            = "awsvpc"
+  cpu                     = 256
+  memory                  = 512
+  execution_role_arn      = aws_iam_role.ecs_task_execution_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name  = "redis"
+      image = "redis:7.2"
+      
+      portMappings = [
+        {
+          containerPort = 6379
+          hostPort      = 6379
+          protocol      = "tcp"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/redis"
+          "awslogs-region"        = "ap-south-1"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+}
+
 # Tika Server Task Definition
 resource "aws_ecs_task_definition" "tika_task" {
   family                   = "tika"
@@ -261,6 +302,20 @@ resource "aws_lb_target_group" "elasticsearch_tg" {
 resource "aws_lb_target_group" "kibana_tg" {
   name        = "kibana-tg"
   port        = 5601
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.default.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/"
+    healthy_threshold   = 2
+    unhealthy_threshold = 10
+  }
+}
+
+resource "aws_lb_target_group" "redis_tg" {
+  name        = "redis-tg"
+  port        = 6379
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
@@ -337,6 +392,22 @@ resource "aws_lb_listener_rule" "kibana_rule" {
   }
 }
 
+resource "aws_lb_listener_rule" "redis_rule" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 175
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.redis_tg.arn
+  }
+
+  condition {
+    host_header {
+      values = ["redis.docuhunt.me"]
+    }
+  }
+}
+
 resource "aws_lb_listener_rule" "tika_rule" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 200
@@ -407,6 +478,27 @@ resource "aws_ecs_service" "kibana_service" {
   }
 }
 
+# Redis Service
+resource "aws_ecs_service" "redis_service" {
+  name            = "redis-service"
+  cluster         = aws_ecs_cluster.docuhunt_cluster.id
+  task_definition = aws_ecs_task_definition.redis_task.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = data.aws_subnets.default.ids
+    security_groups  = [aws_security_group.ecs_tasks_sg.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.redis_tg.arn
+    container_name   = "redis"
+    container_port   = 6379
+  }
+}
+
 # Tika Service
 resource "aws_ecs_service" "tika_service" {
   name            = "tika-service"
@@ -436,6 +528,11 @@ resource "aws_cloudwatch_log_group" "elasticsearch_logs" {
 
 resource "aws_cloudwatch_log_group" "kibana_logs" {
   name              = "/ecs/kibana"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "redis_logs" {
+  name              = "/ecs/redis"
   retention_in_days = 30
 }
 
