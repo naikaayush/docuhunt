@@ -298,29 +298,8 @@ resource "aws_lb_listener" "https" {
     type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
-      message_body = "Invalid path"
+      message_body = "Invalid domain"
       status_code  = "404"
-    }
-  }
-}
-
-resource "aws_lb_listener_rule" "http_redirect" {
-  listener_arn = aws_lb_listener.https.arn
-  priority     = 1
-
-  action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-      host        = "api.docuhunt.me"
-    }
-  }
-
-  condition {
-    path_pattern {
-      values = ["/*"]
     }
   }
 }
@@ -336,8 +315,8 @@ resource "aws_lb_listener_rule" "elasticsearch_rule" {
   }
 
   condition {
-    path_pattern {
-      values = ["/elasticsearch/*"]
+    host_header {
+      values = ["elastic.docuhunt.me"]
     }
   }
 }
@@ -352,8 +331,8 @@ resource "aws_lb_listener_rule" "kibana_rule" {
   }
 
   condition {
-    path_pattern {
-      values = ["/kibana/*"]
+    host_header {
+      values = ["kibana.docuhunt.me"]
     }
   }
 }
@@ -368,8 +347,8 @@ resource "aws_lb_listener_rule" "tika_rule" {
   }
 
   condition {
-    path_pattern {
-      values = ["/tika/*"]
+    host_header {
+      values = ["tika.docuhunt.me"]
     }
   }
 }
