@@ -127,10 +127,10 @@ async function indexToElasticsearch(document: {
 export const crawlDropboxTask = task({
   id: "crawl-dropbox",
   maxDuration: 3600,
-  run: async (payload: any, { ctx }) => {
+  run: async (token: string) => {
     logger.log("Starting Dropbox crawl");
 
-    const dropbox = new DropboxConnector(process.env.DROPBOX_TOKEN!);
+    const dropbox = new DropboxConnector(token);
     const files = await dropbox.listFiles();
 
     for (const file of files) {
