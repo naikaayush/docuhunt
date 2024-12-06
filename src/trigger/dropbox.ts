@@ -103,7 +103,6 @@ async function extractTextWithTika(fileBuffer: Buffer): Promise<string> {
 async function indexToElasticsearch(document: {
   filename: string;
   path: string;
-  url: string;
   content: string;
   modified: string;
 }) {
@@ -127,7 +126,7 @@ async function indexToElasticsearch(document: {
 export const crawlDropboxTask = task({
   id: "crawl-dropbox",
   maxDuration: 3600,
-  run: async (token: string) => {
+  run: async ({ token }: { token: string }) => {
     logger.log("Starting Dropbox crawl");
 
     const dropbox = new DropboxConnector(token);
@@ -138,7 +137,6 @@ export const crawlDropboxTask = task({
         try {
           // Download file content
           const fileBuffer = await dropbox.downloadFile(file.path_display);
-          const tempLink = await dropbox.getTemporaryLink(file.path_display);
 
           // Extract text based on file type
           let textContent: string;
@@ -157,7 +155,7 @@ export const crawlDropboxTask = task({
           await indexToElasticsearch({
             filename: file.name,
             path: file.path_display,
-            url: tempLink,
+
             content: textContent,
             modified: file.server_modified,
           });
@@ -165,7 +163,7 @@ export const crawlDropboxTask = task({
           logger.log("Processed and indexed file", {
             filename: file.name,
             path: file.path_display,
-            url: tempLink,
+
             contentLength: textContent.length,
           });
         } catch (error) {
@@ -177,6 +175,7 @@ export const crawlDropboxTask = task({
 
     return {
       message: "Crawl completed",
+      filesCount: files.length,
     };
   },
 });

@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.5
@@ -32,8 +30,18 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:7.2
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
 volumes:
   elasticsearch-data:
+  redis-data:
 
 networks:
   app-network:

@@ -14,3 +14,5 @@ http://localhost:3000/
 https://docuhunt.vercel.app/
 
 Set DROPBOX_TOKEN, DROPBOX_APP_KEY and DROPBOX_APP_SECRET in .env
+files.metadata.write
+files.content.read
