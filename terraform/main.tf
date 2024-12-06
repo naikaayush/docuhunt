@@ -304,18 +304,23 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.docuhunt_alb.arn
-  port              = "80"
-  protocol          = "HTTP"
+resource "aws_lb_listener_rule" "http_redirect" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 1
 
-  default_action {
+  action {
     type = "redirect"
     redirect {
       port        = "443"
       protocol    = "HTTPS"
       status_code = "HTTP_301"
       host        = "api.docuhunt.me"
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
     }
   }
 }
