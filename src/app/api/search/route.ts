@@ -13,7 +13,20 @@ export async function GET(request: Request) {
     (searchParams.get("sortBy") as "modified" | "relevance") || "relevance";
   const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
 
-  const must: any[] = [
+  type QueryClause = {
+    multi_match?: {
+      query: string | null;
+      fields: string[];
+    };
+    range?: {
+      modified: {
+        gte?: string | null;
+        lte?: string | null;
+      };
+    };
+  };
+
+  const must: QueryClause[] = [
     {
       multi_match: {
         query,

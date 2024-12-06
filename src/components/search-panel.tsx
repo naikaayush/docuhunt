@@ -16,6 +16,7 @@ export function SearchPanel() {
     enabled: debouncedQuery.length > 2,
     staleTime: 1000,
   });
+  console.log(searchQuery.data);
 
   return (
     <div className="space-y-6 lg:col-span-2 lg:col-start-1">
