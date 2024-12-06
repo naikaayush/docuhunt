@@ -14,6 +14,17 @@ services:
     networks:
       - app-network
 
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.5
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - app-network
+
   tika:
     image: apache/tika:3.0.0.0
     ports:
