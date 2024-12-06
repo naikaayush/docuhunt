@@ -1,4 +1,5 @@
 import { logger, task } from "@trigger.dev/sdk/v3";
+import { createClient, RedisClientType } from "redis";
 import axios from "axios";
 
 interface DropboxFile {
@@ -129,8 +130,20 @@ export const crawlDropboxTask = task({
   run: async ({ token }: { token: string }) => {
     logger.log("Starting Dropbox crawl");
 
+    const redis: RedisClientType = createClient({
+      url: `redis://${process.env.REDIS_HOST || "localhost"}:${
+        process.env.REDIS_PORT || "6379"
+      }`,
+    });
+    await redis.connect();
+
     const dropbox = new DropboxConnector(token);
     const files = await dropbox.listFiles();
+
+    await redis.sAdd(
+      "dropbox:files:total",
+      ...files.map((f) => f.path_display)
+    );
 
     for (const file of files) {
       if (file[".tag"] === "file") {
@@ -155,15 +168,15 @@ export const crawlDropboxTask = task({
           await indexToElasticsearch({
             filename: file.name,
             path: file.path_display,
-
             content: textContent,
             modified: file.server_modified,
           });
 
+          await redis.sAdd("dropbox:files:scanned", file.path_display);
+
           logger.log("Processed and indexed file", {
             filename: file.name,
             path: file.path_display,
-
             contentLength: textContent.length,
           });
         } catch (error) {
@@ -172,6 +185,8 @@ export const crawlDropboxTask = task({
         }
       }
     }
+
+    await redis.quit();
 
     return {
       message: "Crawl completed",

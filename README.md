@@ -16,3 +16,20 @@ https://docuhunt.vercel.app/
 Set DROPBOX_TOKEN, DROPBOX_APP_KEY and DROPBOX_APP_SECRET in .env
 files.metadata.write
 files.content.read
+
+Tech Stack Used
+
+Terraform
+ECS
+ALB
+
+Trigger.dev
+
+Elasticsearch
+Tika Server
+Redis
+
+Tanstack React Query
+
+Shadcn UI
+Tailwind
