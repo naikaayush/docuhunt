@@ -133,6 +133,14 @@ resource "aws_ecs_task_definition" "elasticsearch_task" {
         {
           name  = "ES_JAVA_OPTS"
           value = "-Xms1g -Xmx1g"
+        },
+        {
+          name  = "xpack.security.enabled"
+          value = "false"
+        },
+        {
+          name  = "network.host"
+          value = "0.0.0.0"
         }
       ]
 
@@ -241,9 +249,12 @@ resource "aws_lb_target_group" "elasticsearch_tg" {
   target_type = "ip"
 
   health_check {
-    path                = "/"
+    path                = "/_cluster/health"
     healthy_threshold   = 2
     unhealthy_threshold = 10
+    timeout             = 5
+    interval            = 30
+    matcher             = "200"
   }
 }
 
@@ -276,26 +287,12 @@ resource "aws_lb_target_group" "tika_tg" {
 }
 
 # ALB Listener
-# resource "aws_lb_listener" "front_end" {
-#   load_balancer_arn = aws_lb.docuhunt_alb.arn
-#   port              = "443"
-#   protocol          = "HTTPS"
-#   ssl_policy        = "ELBSecurityPolicy-2016-08"
-#   certificate_arn   = "arn:aws:acm:ap-south-1:050752654432:certificate/3674e245-064a-4a23-a4be-5b329d821624"
-
-#   default_action {
-#     type = "fixed-response"
-#     fixed_response {
-#       content_type = "text/plain"
-#       message_body = "Invalid path"
-#       status_code  = "404"
-#     }
-#   }
-# }
-resource "aws_lb_listener" "front_end" {
+resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.docuhunt_alb.arn
-  port              = "80"
-  protocol          = "HTTP"
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:acm:ap-south-1:050752654432:certificate/e8167a0b-80f4-4913-89ec-8dc866f54f33"
 
   default_action {
     type = "fixed-response"
@@ -307,9 +304,25 @@ resource "aws_lb_listener" "front_end" {
   }
 }
 
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.docuhunt_alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+      host        = "api.docuhunt.me"
+    }
+  }
+}
+
 # Listener Rules
 resource "aws_lb_listener_rule" "elasticsearch_rule" {
-  listener_arn = aws_lb_listener.front_end.arn
+  listener_arn = aws_lb_listener.https.arn
   priority     = 100
 
   action {
@@ -325,7 +338,7 @@ resource "aws_lb_listener_rule" "elasticsearch_rule" {
 }
 
 resource "aws_lb_listener_rule" "kibana_rule" {
-  listener_arn = aws_lb_listener.front_end.arn
+  listener_arn = aws_lb_listener.https.arn
   priority     = 150
 
   action {
@@ -341,7 +354,7 @@ resource "aws_lb_listener_rule" "kibana_rule" {
 }
 
 resource "aws_lb_listener_rule" "tika_rule" {
-  listener_arn = aws_lb_listener.front_end.arn
+  listener_arn = aws_lb_listener.https.arn
   priority     = 200
 
   action {
