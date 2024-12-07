@@ -328,7 +328,7 @@ resource "aws_lb_target_group" "kibana_tg" {
 resource "aws_lb_target_group" "redis_tg" {
   name        = "redis-tg"
   port        = 6379
-  protocol    = "TCP_UDP"
+  protocol    = "TCP"
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
 
