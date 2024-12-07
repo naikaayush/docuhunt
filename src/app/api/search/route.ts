@@ -71,8 +71,8 @@ export async function GET(request: Request) {
   });
 
   return Response.json(
-    response.hits.hits.map((hit: any) => ({
-      ...hit._source,
+    response.hits.hits.map((hit) => ({
+      ...(hit._source as object),
       index: hit._index,
       highlight: hit.highlight,
     }))

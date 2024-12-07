@@ -45,7 +45,7 @@ export function SearchPanel() {
           {data && (
             <div className="mt-4 space-y-4">
               <div className="text-sm text-gray-500">
-                {data.length} results for "{debouncedQuery}"
+                {data.length} results for &ldquo;{debouncedQuery}&rdquo;
               </div>
               <div className="overflow-y-auto max-h-[500px]">
                 {data.map((result, index) => (

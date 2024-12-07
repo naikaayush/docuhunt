@@ -17,6 +17,7 @@ interface IndexPanelProps {
   dropboxToken: string;
   dropboxTotalFilesCount: number;
   dropboxScannedFilesCount: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dropboxRuns: any[];
 }
 
