@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { IndexPanel } from "@/components/index-panel";
 import Navbar from "@/components/navbar";
 import { SearchPanel } from "@/components/search-panel";

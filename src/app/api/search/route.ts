@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Client } from "@elastic/elasticsearch";
 
 const client = new Client({
