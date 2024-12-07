@@ -4,6 +4,8 @@ import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { auth } from "@trigger.dev/sdk/v3";
+import { RefreshOnFocus } from "@/components/refresh-on-focus";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -47,6 +49,8 @@ export default async function RootLayout({
         >
           {children}
         </body>
+        <RefreshOnFocus />
+        <Toaster position="top-right" />
       </Providers>
     </html>
   );

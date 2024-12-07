@@ -131,9 +131,7 @@ export const crawlDropboxTask = task({
     logger.log("Starting Dropbox crawl");
 
     const redis: RedisClientType = createClient({
-      url: `redis://${process.env.REDIS_HOST || "localhost"}:${
-        process.env.REDIS_PORT || "6379"
-      }`,
+      url: process.env.REDIS_URL,
     });
     await redis.connect();
 
@@ -142,7 +140,7 @@ export const crawlDropboxTask = task({
 
     await redis.sAdd(
       "dropbox:files:total",
-      ...files.map((f) => f.path_display)
+      files.map((f) => f.path_display)
     );
 
     for (const file of files) {

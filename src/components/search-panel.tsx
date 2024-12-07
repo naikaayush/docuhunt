@@ -21,33 +21,41 @@ export function SearchPanel() {
 
   return (
     <div className="space-y-6 lg:col-span-2 lg:col-start-1">
-      <section>
-        <div className="bg-background shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:px-6">
-            <Input
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search documents..."
-              className="w-full"
-            />
-            {isLoading && (
-              <div className="flex items-center justify-center">
-                <Skeleton className="w-full h-10" />
-              </div>
-            )}
-
-            {data && (
-              <div className="mt-4 space-y-4">
-                <div className="text-sm text-gray-500">
-                  {data.length} results for "{debouncedQuery}"
+      <div className="bg-background shadow sm:rounded-lg">
+        <div className="px-4 py-5 sm:px-6">
+          <Input
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search documents..."
+            className="w-full"
+          />
+          {isLoading && (
+            <div className="flex items-center justify-center mt-4 w-full">
+              <div className="flex hover:bg-accent hover:text-accent-foreground p-4 rounded-lg w-full">
+                <div className="flex items-center gap-4 w-full">
+                  <Skeleton className="h-12 w-12" />
+                  <div className="flex flex-col">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-64 mt-2" />
+                  </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {data && (
+            <div className="mt-4 space-y-4">
+              <div className="text-sm text-gray-500">
+                {data.length} results for "{debouncedQuery}"
+              </div>
+              <div className="overflow-y-auto max-h-[500px]">
                 {data.map((result, index) => (
                   <SearchResult key={index} result={result} />
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
