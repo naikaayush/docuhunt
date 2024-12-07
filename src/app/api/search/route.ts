@@ -61,7 +61,20 @@ export async function GET(request: Request) {
       },
     },
     sort,
+    highlight: {
+      fields: {
+        content: {},
+      },
+      pre_tags: ["<mark>"],
+      post_tags: ["</mark>"],
+    },
   });
 
-  return Response.json(response.hits.hits.map((hit) => hit._source));
+  return Response.json(
+    response.hits.hits.map((hit: any) => ({
+      ...hit._source,
+      index: hit._index,
+      highlight: hit.highlight,
+    }))
+  );
 }
