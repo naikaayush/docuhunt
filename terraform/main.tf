@@ -75,8 +75,8 @@ resource "aws_security_group" "ecs_tasks_sg" {
   }
 
   ingress {
-    from_port       = 8000
-    to_port         = 8000
+    from_port       = 8001
+    to_port         = 8001
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
   }
@@ -232,8 +232,8 @@ resource "aws_ecs_task_definition" "redis_task" {
           protocol      = "tcp"
         },
         {
-          containerPort = 8000
-          hostPort      = 8000
+          containerPort = 8001
+          hostPort      = 8001
           protocol      = "tcp"
         }
       ]
@@ -341,7 +341,7 @@ resource "aws_lb_target_group" "redis_tg" {
 
 resource "aws_lb_target_group" "redis_stack_tg" {
   name        = "redis-stack-tg"
-  port        = 8000
+  port        = 8001
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
@@ -543,7 +543,7 @@ resource "aws_ecs_service" "redis_service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.redis_stack_tg.arn
     container_name   = "redis"
-    container_port   = 8000
+    container_port   = 8001
   }
 }
 
