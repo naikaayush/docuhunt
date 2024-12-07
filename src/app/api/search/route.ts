@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   type QueryClause = {
     multi_match?: {
-      query: string | null;
+      query: string;
       fields: string[];
     };
     range?: {
@@ -26,14 +26,16 @@ export async function GET(request: Request) {
     };
   };
 
-  const must: QueryClause[] = [
-    {
+  const must: QueryClause[] = [];
+
+  if (query) {
+    must.push({
       multi_match: {
         query,
         fields: ["content"],
       },
-    },
-  ];
+    });
+  }
 
   if (startDate || endDate) {
     must.push({
