@@ -74,6 +74,13 @@ resource "aws_security_group" "ecs_tasks_sg" {
     security_groups = [aws_security_group.alb_sg.id]
   }
 
+  ingress {
+    from_port       = 8000
+    to_port         = 8000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -216,12 +223,17 @@ resource "aws_ecs_task_definition" "redis_task" {
   container_definitions = jsonencode([
     {
       name  = "redis"
-      image = "redis:7.2"
+      image = "redis/redis-stack:7.2.0-v12"
       
       portMappings = [
         {
           containerPort = 6379
           hostPort      = 6379
+          protocol      = "tcp"
+        },
+        {
+          containerPort = 8000
+          hostPort      = 8000
           protocol      = "tcp"
         }
       ]
@@ -327,6 +339,20 @@ resource "aws_lb_target_group" "redis_tg" {
   }
 }
 
+resource "aws_lb_target_group" "redis_stack_tg" {
+  name        = "redis-stack-tg"
+  port        = 8000
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.default.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/"
+    healthy_threshold   = 2
+    unhealthy_threshold = 10
+  }
+}
+
 resource "aws_lb_target_group" "tika_tg" {
   name        = "tika-tg"
   port        = 9998
@@ -404,6 +430,22 @@ resource "aws_lb_listener_rule" "redis_rule" {
   condition {
     host_header {
       values = ["redis.docuhunt.me"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "redis_stack_rule" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 180
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.redis_stack_tg.arn
+  }
+
+  condition {
+    host_header {
+      values = ["stack.docuhunt.me"]
     }
   }
 }
@@ -496,6 +538,12 @@ resource "aws_ecs_service" "redis_service" {
     target_group_arn = aws_lb_target_group.redis_tg.arn
     container_name   = "redis"
     container_port   = 6379
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.redis_stack_tg.arn
+    container_name   = "redis"
+    container_port   = 8000
   }
 }
 

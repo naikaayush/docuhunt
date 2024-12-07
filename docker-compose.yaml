@@ -31,9 +31,10 @@ services:
       - app-network
 
   redis:
-    image: redis:7.2
+    image: redis/redis-stack:7.2.0-v12
     ports:
       - "6379:6379"
+      - "8000:8000"
     volumes:
       - redis-data:/data
     networks:
