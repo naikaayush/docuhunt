@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { auth } from "@trigger.dev/sdk/v3";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,14 +26,22 @@ export const metadata: Metadata = {
   description: "docuhunt",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const triggerPublicToken = await auth.createPublicToken({
+    scopes: {
+      read: {
+        runs: true,
+      },
+    },
+  });
+
   return (
     <html lang="en">
-      <Providers>
+      <Providers triggerPublicToken={triggerPublicToken}>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${libreBaskerville.variable} antialiased`}
         >

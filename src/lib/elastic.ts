@@ -6,11 +6,14 @@ interface SearchParams {
   sortOrder?: "asc" | "desc";
 }
 
-interface SearchResult {
+export interface SearchResult {
   filename: string;
   path: string;
   content: string;
   modified: string;
+  highlight?: {
+    content: string[];
+  };
 }
 
 export async function searchDocuments(
