@@ -33,3 +33,9 @@ Tanstack React Query
 
 Shadcn UI
 Tailwind
+
+TODO:
+[] Generate Dropbox Temporary Link
+[] Generate token using refresh token
+[] Show list of files
+[] Advanced Filters
