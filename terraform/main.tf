@@ -328,12 +328,12 @@ resource "aws_lb_target_group" "kibana_tg" {
 resource "aws_lb_target_group" "redis_tg" {
   name        = "redis-tg"
   port        = 6379
-  protocol    = "HTTP"
+  protocol    = "TCP_UDP"
   vpc_id      = data.aws_vpc.default.id
   target_type = "ip"
 
   health_check {
-    path                = "/"
+    protocol            = "TCP"
     healthy_threshold   = 2
     unhealthy_threshold = 10
   }
@@ -364,6 +364,26 @@ resource "aws_lb_target_group" "tika_tg" {
     path                = "/"
     healthy_threshold   = 2
     unhealthy_threshold = 10
+  }
+}
+
+# Network Load Balancer for Redis
+resource "aws_lb" "redis_nlb" {
+  name               = "redis-nlb"
+  internal           = false
+  load_balancer_type = "network"
+  subnets           = data.aws_subnets.default.ids
+}
+
+# NLB Listener for Redis
+resource "aws_lb_listener" "redis_tcp" {
+  load_balancer_arn = aws_lb.redis_nlb.arn
+  port              = "6379"
+  protocol          = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.redis_tg.arn
   }
 }
 
@@ -414,22 +434,6 @@ resource "aws_lb_listener_rule" "kibana_rule" {
   condition {
     host_header {
       values = ["kibana.docuhunt.me"]
-    }
-  }
-}
-
-resource "aws_lb_listener_rule" "redis_rule" {
-  listener_arn = aws_lb_listener.https.arn
-  priority     = 175
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.redis_tg.arn
-  }
-
-  condition {
-    host_header {
-      values = ["redis.docuhunt.me"]
     }
   }
 }
