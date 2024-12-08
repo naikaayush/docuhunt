@@ -138,8 +138,9 @@ All services run in the default VPC with public subnets and have auto-assigned p
 - Dropbox - Document Storage
 
 TODO:
-[] Generate Dropbox Temporary Link
-[] Generate token using refresh token
-[x] Show list of files
-[x] Advanced Filters
-[] Disclaimer that it has been deployed in Mumbai, and show API latency and results
+
+- [] Generate Dropbox Temporary Link
+- [] Generate token using refresh token
+- [x] Show list of files
+- [x] Advanced Filters
+- [x] Disclaimer that it has been deployed in Mumbai, and show API latency and results

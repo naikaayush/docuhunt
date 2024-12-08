@@ -93,27 +93,25 @@ export function IndexPanel({
       </div>
       <div className="bg-background px-4 py-5 shadow sm:rounded-lg sm:px-6 mt-4">
         <div className="flex flex-col gap-4">
-          <div className="max-h-[320px] overflow-auto">
-            <Table>
-              <TableCaption>All files in your Dropbox</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Filename</TableHead>
-                  <TableHead>Status</TableHead>
+          <Table>
+            <TableCaption>All files in your Dropbox</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Filename</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dropboxAllFiles.map((file) => (
+                <TableRow key={file}>
+                  <TableCell className="font-medium">{file}</TableCell>
+                  <TableCell>
+                    {dropboxScannedFilesCount > 0 ? "Scanned" : "Pending"}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dropboxAllFiles.map((file) => (
-                  <TableRow key={file}>
-                    <TableCell className="font-medium">{file}</TableCell>
-                    <TableCell>
-                      {dropboxScannedFilesCount > 0 ? "Scanned" : "Pending"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

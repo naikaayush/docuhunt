@@ -29,6 +29,9 @@ export default async function Home() {
               Try searching for Indian cities like Bangalore, Mumbai, or cities
               like Paris, Amsterdam to explore documents about different
               countries.
+              <br />
+              Note: The service is deployed in Mumbai, India - if you're
+              accessing from a distant location, response times may be slower.
             </AlertDescription>
           </Alert>
           <div className="w-full mt-4 grid  grid-cols-1 gap-6 lg:grid-flow-col-dense lg:grid-cols-3">
