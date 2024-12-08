@@ -30,7 +30,7 @@ export default async function Home() {
               like Paris, Amsterdam to explore documents about different
               countries.
               <br />
-              Note: The service is deployed in Mumbai, India - if you're
+              Note: The service is deployed in Mumbai, India - if you&apos;re
               accessing from a distant location, response times may be slower.
             </AlertDescription>
           </Alert>
