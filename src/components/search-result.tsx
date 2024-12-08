@@ -3,7 +3,8 @@ import { SearchResult as SearchResultType } from "@/lib/elastic";
 export default function SearchResult({ result }: { result: SearchResultType }) {
   return (
     <a
-      href={result.path}
+      // TODO: Generate temporary link
+      // href={result.path}
       className="flex hover:bg-accent hover:text-accent-foreground p-4 rounded-lg"
     >
       <div className="flex items-start gap-4">

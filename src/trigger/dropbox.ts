@@ -144,72 +144,80 @@ async function clearElasticsearch() {
     throw error;
   }
 }
-
 export const crawlDropboxTask = task({
   id: "crawl-dropbox",
   maxDuration: 3600,
   run: async ({ token }: { token: string }) => {
     logger.log("Starting Dropbox crawl");
 
-    await clearElasticsearch();
-    logger.log("Cleared Elasticsearch index");
-
     const redis: RedisClientType = createClient({
       url: process.env.REDIS_URL,
     });
     await redis.connect();
 
+    await redis.del("dropbox:files:total");
+    await redis.del("dropbox:files:scanned");
+    logger.log("Cleared Redis sets");
+
+    await clearElasticsearch();
+    logger.log("Cleared Elasticsearch index");
+
     const dropbox = new DropboxConnector(token);
-    const files = await dropbox.listFiles();
 
-    await redis.sAdd(
-      "dropbox:files:total",
-      files.map((f) => f.path_display)
-    );
+    async function processFolder(path: string) {
+      const files = await dropbox.listFiles(path);
+      await redis.sAdd(
+        "dropbox:files:total",
+        files.filter((f) => f[".tag"] === "file").map((f) => f.path_display)
+      );
 
-    for (const file of files) {
-      if (file[".tag"] === "file") {
-        try {
-          const fileBuffer = await dropbox.downloadFile(file.path_display);
+      for (const file of files) {
+        if (file[".tag"] === "folder") {
+          await processFolder(file.path_display);
+        } else if (file[".tag"] === "file") {
+          try {
+            const fileBuffer = await dropbox.downloadFile(file.path_display);
 
-          let textContent: string;
-          if (file.name.endsWith(".txt")) {
-            textContent = fileBuffer.toString("utf8");
-          } else if (
-            file.name.endsWith(".pdf") ||
-            file.name.endsWith(".docx")
-          ) {
-            textContent = await extractTextWithTika(fileBuffer);
-          } else {
+            let textContent: string;
+            if (file.name.endsWith(".txt")) {
+              textContent = fileBuffer.toString("utf8");
+            } else if (
+              file.name.endsWith(".pdf") ||
+              file.name.endsWith(".docx")
+            ) {
+              textContent = await extractTextWithTika(fileBuffer);
+            } else {
+              continue;
+            }
+
+            await indexToElasticsearch({
+              filename: file.name,
+              path: file.path_display,
+              content: textContent,
+              modified: file.server_modified,
+            });
+
+            await redis.sAdd("dropbox:files:scanned", file.path_display);
+
+            logger.log("Processed and indexed file", {
+              filename: file.name,
+              path: file.path_display,
+              contentLength: textContent.length,
+            });
+          } catch (error) {
+            logger.error("Error processing file", { file: file.name, error });
             continue;
           }
-
-          await indexToElasticsearch({
-            filename: file.name,
-            path: file.path_display,
-            content: textContent,
-            modified: file.server_modified,
-          });
-
-          await redis.sAdd("dropbox:files:scanned", file.path_display);
-
-          logger.log("Processed and indexed file", {
-            filename: file.name,
-            path: file.path_display,
-            contentLength: textContent.length,
-          });
-        } catch (error) {
-          logger.error("Error processing file", { file: file.name, error });
-          continue;
         }
       }
     }
 
+    await processFolder("");
     await redis.quit();
 
     return {
       message: "Crawl completed",
-      filesCount: files.length,
+      filesCount: await redis.sCard("dropbox:files:total"),
     };
   },
 });

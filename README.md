@@ -1,5 +1,7 @@
 ## Docuhunt
 
+![Docuhunt Screenshot](./screenshots/docuhunt.png)
+
 ## Dropbox Setup
 
 To use Docuhunt with Dropbox, you'll need to create a Dropbox app and configure the necessary credentials.
@@ -122,6 +124,8 @@ All services run in the default VPC with public subnets and have auto-assigned p
 - Apache Tika - Document Text Extraction
 - Upstash Redis - Serverless Redis for State Management & Caching
 
+![Trigger Dev Workflows](./screenshots/trigger-dev.png)
+
 ### Frontend
 
 - Next.js/React - Full-Stack React Framework
@@ -136,6 +140,6 @@ All services run in the default VPC with public subnets and have auto-assigned p
 TODO:
 [] Generate Dropbox Temporary Link
 [] Generate token using refresh token
-[] Show list of files
-[] Advanced Filters
+[x] Show list of files
+[x] Advanced Filters
 [] Disclaimer that it has been deployed in Mumbai, and show API latency and results

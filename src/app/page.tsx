@@ -26,8 +26,9 @@ export default async function Home() {
             <TextSearch className="h-4 w-4" />
             <AlertTitle>Search Tip!</AlertTitle>
             <AlertDescription>
-              Try searching for European cities like Paris, Amsterdam, or
-              Stockholm to explore documents about different countries.
+              Try searching for Indian cities like Bangalore, Mumbai, or cities
+              like Paris, Amsterdam to explore documents about different
+              countries.
             </AlertDescription>
           </Alert>
           <div className="w-full mt-4 grid  grid-cols-1 gap-6 lg:grid-flow-col-dense lg:grid-cols-3">
