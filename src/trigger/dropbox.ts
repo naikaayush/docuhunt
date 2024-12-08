@@ -124,11 +124,35 @@ async function indexToElasticsearch(document: {
   }
 }
 
+async function clearElasticsearch() {
+  try {
+    await axios.post(
+      `${process.env.ELASTICSEARCH_URL}/documents/_delete_by_query`,
+      {
+        query: {
+          match_all: {},
+        },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    logger.error("Error clearing Elasticsearch index", { error });
+    throw error;
+  }
+}
+
 export const crawlDropboxTask = task({
   id: "crawl-dropbox",
   maxDuration: 3600,
   run: async ({ token }: { token: string }) => {
     logger.log("Starting Dropbox crawl");
+
+    await clearElasticsearch();
+    logger.log("Cleared Elasticsearch index");
 
     const redis: RedisClientType = createClient({
       url: process.env.REDIS_URL,
@@ -146,10 +170,8 @@ export const crawlDropboxTask = task({
     for (const file of files) {
       if (file[".tag"] === "file") {
         try {
-          // Download file content
           const fileBuffer = await dropbox.downloadFile(file.path_display);
 
-          // Extract text based on file type
           let textContent: string;
           if (file.name.endsWith(".txt")) {
             textContent = fileBuffer.toString("utf8");
@@ -159,10 +181,9 @@ export const crawlDropboxTask = task({
           ) {
             textContent = await extractTextWithTika(fileBuffer);
           } else {
-            continue; // Skip unsupported file types
+            continue;
           }
 
-          // Index document in Elasticsearch
           await indexToElasticsearch({
             filename: file.name,
             path: file.path_display,

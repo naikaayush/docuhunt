@@ -33,3 +33,14 @@ export async function getDropboxScannedFilesCount(): Promise<number> {
     throw error;
   }
 }
+
+export async function getDropboxAllFiles(): Promise<string[]> {
+  try {
+    const client = getRedisClient();
+    const files = await client.sMembers("dropbox:files:total");
+    return files;
+  } catch (error) {
+    console.error("Error getting all dropbox files:", error);
+    throw error;
+  }
+}

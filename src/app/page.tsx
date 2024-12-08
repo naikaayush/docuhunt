@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { IndexPanel } from "@/components/index-panel";
 import Navbar from "@/components/navbar";
 import { SearchPanel } from "@/components/search-panel";
-import { getDropboxTotalFilesCount } from "@/lib/redis";
+import { getDropboxAllFiles, getDropboxTotalFilesCount } from "@/lib/redis";
 import { getDropboxScannedFilesCount } from "@/lib/redis";
 import { getDropboxRuns } from "@/lib/trigger";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -13,6 +13,7 @@ export default async function Home() {
   const dropboxToken = process.env.DROPBOX_TOKEN as string;
   const dropboxTotalFilesCount = await getDropboxTotalFilesCount();
   const dropboxScannedFilesCount = await getDropboxScannedFilesCount();
+  const dropboxAllFiles = await getDropboxAllFiles();
 
   const dropboxRuns = await getDropboxRuns(3);
 
@@ -35,6 +36,7 @@ export default async function Home() {
               dropboxToken={dropboxToken}
               dropboxTotalFilesCount={dropboxTotalFilesCount}
               dropboxScannedFilesCount={dropboxScannedFilesCount}
+              dropboxAllFiles={dropboxAllFiles}
               dropboxRuns={dropboxRuns.data}
             />
           </div>
