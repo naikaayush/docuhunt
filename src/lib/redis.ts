@@ -1,15 +1,21 @@
 import { createClient } from "redis";
 
-const redis = createClient({
-  url: process.env.REDIS_URL,
-});
+let redis: ReturnType<typeof createClient> | null = null;
 
-redis.connect();
+export function getRedisClient() {
+  if (!redis) {
+    redis = createClient({
+      url: process.env.REDIS_URL,
+    });
+    redis.connect();
+  }
+  return redis;
+}
 
 export async function getDropboxTotalFilesCount(): Promise<number> {
   try {
-    const count = await redis.sCard("dropbox:files:total");
-    console.log({ count });
+    const client = getRedisClient();
+    const count = await client.sCard("dropbox:files:total");
     return count;
   } catch (error) {
     console.error("Error getting dropbox total files count:", error);
@@ -19,7 +25,8 @@ export async function getDropboxTotalFilesCount(): Promise<number> {
 
 export async function getDropboxScannedFilesCount(): Promise<number> {
   try {
-    const count = await redis.sCard("dropbox:files:scanned");
+    const client = getRedisClient();
+    const count = await client.sCard("dropbox:files:scanned");
     return count;
   } catch (error) {
     console.error("Error getting dropbox scanned files count:", error);

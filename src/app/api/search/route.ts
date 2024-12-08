@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { getRedisClient } from "@/lib/redis";
 import { Client } from "@elastic/elasticsearch";
 
 const client = new Client({
@@ -14,6 +15,15 @@ export async function GET(request: Request) {
   const sortBy =
     (searchParams.get("sortBy") as "modified" | "relevance") || "relevance";
   const sortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc";
+
+  const redis = getRedisClient();
+  const cacheKey = `search:${query}:${startDate}:${endDate}:${sortBy}:${sortOrder}`;
+
+  const cachedResults = await redis.get(cacheKey);
+  if (cachedResults) {
+    console.log("Cache hit");
+    return Response.json(JSON.parse(cachedResults));
+  }
 
   type QueryClause = {
     multi_match?: {
@@ -72,11 +82,15 @@ export async function GET(request: Request) {
     },
   });
 
-  return Response.json(
-    response.hits.hits.map((hit) => ({
-      ...(hit._source as object),
-      index: hit._index,
-      highlight: hit.highlight,
-    }))
-  );
+  const results = response.hits.hits.map((hit) => ({
+    ...(hit._source as object),
+    index: hit._index,
+    highlight: hit.highlight,
+  }));
+
+  await redis.set(cacheKey, JSON.stringify(results), {
+    EX: 300,
+  });
+
+  return Response.json(results);
 }
